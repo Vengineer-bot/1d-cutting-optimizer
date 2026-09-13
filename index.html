@@ -107,6 +107,8 @@
     .cut-list-item label {
       grid-column: 1 / -1;
       margin-bottom: 10px;
+      font-weight: 600;
+      color: #333;
     }
 
     .cut-list-item input {
@@ -235,6 +237,9 @@
       color: #333;
       white-space: pre-wrap;
       word-wrap: break-word;
+      border: 1px solid #ddd;
+      max-height: 400px;
+      overflow-y: auto;
     }
 
     .loading {
@@ -447,13 +452,29 @@
         return;
       }
 
+      // Cek apakah cut list item valid
+      let hasValidItem = false;
+      for (const cut of cutLists) {
+        if (cut.length > 0 && cut.quantity > 0) {
+          hasValidItem = true;
+          break;
+        }
+      }
+
+      if (!hasValidItem) {
+        showMessage('Minimal harus ada 1 item yang valid dalam cut list', 'error');
+        return;
+      }
+
       // Show loading
       showLoading();
 
       // Call Google Apps Script function
-      google.script.run.withSuccessHandler(displayResults)
+      google.script.run
+        .withSuccessHandler(displayResults)
         .withFailureHandler(function(error) {
           showMessage('Error: ' + error, 'error');
+          document.getElementById('resultsSection').classList.add('hidden');
         })
         .optimizeCutting(materialLength, kerfThickness, cutLists);
     }
@@ -465,18 +486,14 @@
 
       if (result.error) {
         showMessage(result.error, 'error');
-        resultsSection.classList.add('hidden');
         return;
       }
-
-      // Hide loading and show results section
-      resultsSection.classList.remove('hidden');
 
       // Update stats
       document.getElementById('totalBatches').textContent = result.totalBatches;
       document.getElementById('wastePercentage').textContent = result.wastePercentage + '%';
       document.getElementById('totalMaterialUsed').textContent = result.totalMaterialUsed + ' mm';
-      document.getElementById('totalWaste').textContent = result.totalWaste + ' mm';
+      document.getElementById('totalWaste').textContent = result.totalWaste.toFixed(2) + ' mm';
 
       // Display diagrams
       const diagramContainer = document.getElementById('diagramContainer');
@@ -500,7 +517,7 @@
     function showLoading() {
       document.getElementById('resultsSection').classList.remove('hidden');
       const diagramContainer = document.getElementById('diagramContainer');
-      diagramContainer.innerHTML = '<div class="loading">Memproses...</div>';
+      diagramContainer.innerHTML = '<div class="loading">Memproses optimasi...</div>';
       diagramContainer.classList.remove('hidden');
     }
 

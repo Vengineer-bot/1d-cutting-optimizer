@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1D Cutting Stock Optimizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #333;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+    }
+
+    .cut-list-item {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border-left: 4px solid #667eea;
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .cut-list-item label {
+      grid-column: 1 / -1;
+      margin-bottom: 10px;
+    }
+
+    .cut-list-item input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .cut-list-item .btn-remove {
+      padding: 10px 15px;
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.3s;
+    }
+
+    .cut-list-item .btn-remove:hover {
+      background: #ff5252;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-add {
+      background: #51cf66;
+      color: white;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .btn-add:hover {
+      background: #40c057;
+    }
+
+    .results {
+      margin-top: 40px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 2px solid #e0e0e0;
+    }
+
+    .results h3 {
+      color: #333;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+
+    .result-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .result-stat {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      border-left: 4px solid #667eea;
+    }
+
+    .result-stat-label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .result-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .diagram-section {
+      margin-top: 20px;
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-x: auto;
+      color: #333;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .error {
+      background: #ffe0e0;
+      border: 2px solid #ff6b6b;
+      color: #c92a2a;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .success {
+      background: #e7f5ff;
+      border: 2px solid #51cf66;
+      color: #1c7ed6;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .result-item {
+        grid-template-columns: 1fr;
+      }
+
+      .cut-list-item {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-group {
+        flex-direction: column;
+      }
+
+      .btn {
+        flex: none;
+        width: 100%;
+      }
+
+      .header h1 {
+        font-size: 20px;
+      }
+
+      .content {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔧 1D Cutting Stock Optimizer</h1>
+      <p>Optimalkan pemotongan material dengan waste minimal</p>
+    </div>
+
+    <div class="content">
+      <!-- Input Parameters -->
+      <div class="form-group">
+        <label for="materialLength">Panjang Material (mm)</label>
+        <input type="number" id="materialLength" placeholder="Contoh: 6000" min="1" step="0.1">
+      </div>
+
+      <div class="form-group">
+        <label for="kerfThickness">Tebal Gergaji/Kerf (mm)</label>
+        <input type="number" id="kerfThickness" placeholder="Contoh: 3" min="0" step="0.1" value="0">
+      </div>
+
+      <!-- Cut List Section -->
+      <div class="section-title">Daftar Potongan (Cut List)</div>
+      
+      <div id="cutListContainer">
+        <!-- Items will be added here dynamically -->
+      </div>
+
+      <!-- Buttons -->
+      <div class="btn-group">
+        <button class="btn btn-add" onclick="addCutList()">+ Tambah List</button>
+        <button class="btn btn-primary" onclick="runOptimization()">Hitung Optimasi</button>
+        <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+      </div>
+
+      <!-- Results Section -->
+      <div id="resultsSection" class="hidden">
+        <div class="results">
+          <h3>📊 Hasil Optimasi</h3>
+          
+          <div id="messageBox"></div>
+
+          <div class="result-item">
+            <div class="result-stat">
+              <div class="result-stat-label">Total Batang</div>
+              <div class="result-stat-value" id="totalBatches">-</div>
+            </div>
+            <div class="result-stat">
+              <div class="result-stat-label">Waste Percentage</div>
+              <div class="result-stat-value" id="wastePercentage">-</div>
+            </div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-stat">
+              <div class="result-stat-label">Total Material Digunakan</div>
+              <div class="result-stat-value" id="totalMaterialUsed">-</div>
+            </div>
+            <div class="result-stat">
+              <div class="result-stat-label">Total Waste</div>
+              <div class="result-stat-value" id="totalWaste">-</div>
+            </div>
+          </div>
+
+          <div id="diagramContainer" class="diagram-section hidden"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let cutListCounter = 0;
+    const defaultCutListLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+
+    // Initialize with 2 cut lists
+    function initializeCutLists() {
+      addCutList();
+      addCutList();
+    }
+
+    // Add new cut list item
+    function addCutList() {
+      const label = defaultCutListLabels[cutListCounter] || String.fromCharCode(65 + (cutListCounter % 26));
+      const container = document.getElementById('cutListContainer');
+      
+      const itemHtml = `
+        <div class="cut-list-item" id="cutList-${cutListCounter}">
+          <label>List ${label}</label>
+          <div>
+            <input type="number" class="cut-length" placeholder="Panjang (mm)" min="1" step="0.1">
+          </div>
+          <div>
+            <input type="number" class="cut-quantity" placeholder="Jumlah" min="1" value="1">
+          </div>
+          <button class="btn-remove" onclick="removeCutList(${cutListCounter})">Hapus</button>
+        </div>
+      `;
+      
+      container.insertAdjacentHTML('beforeend', itemHtml);
+      cutListCounter++;
+    }
+
+    // Remove cut list item
+    function removeCutList(id) {
+      const element = document.getElementById(`cutList-${id}`);
+      if (element) {
+        element.remove();
+      }
+    }
+
+    // Get all cut lists data
+    function getCutListsData() {
+      const container = document.getElementById('cutListContainer');
+      const items = container.querySelectorAll('.cut-list-item');
+      const cutLists = [];
+
+      items.forEach((item, index) => {
+        const length = parseFloat(item.querySelector('.cut-length').value);
+        const quantity = parseInt(item.querySelector('.cut-quantity').value);
+        
+        if (length && !isNaN(length) && quantity && !isNaN(quantity)) {
+          const label = defaultCutListLabels[index] || String.fromCharCode(65 + (index % 26));
+          cutLists.push({
+            id: label,
+            length: length,
+            quantity: quantity
+          });
+        }
+      });
+
+      return cutLists;
+    }
+
+    // Run optimization
+    function runOptimization() {
+      const materialLength = parseFloat(document.getElementById('materialLength').value);
+      const kerfThickness = parseFloat(document.getElementById('kerfThickness').value);
+      const cutLists = getCutListsData();
+
+      if (!materialLength || isNaN(materialLength) || materialLength <= 0) {
+        showMessage('Panjang material harus diisi dengan angka > 0', 'error');
+        return;
+      }
+
+      if (cutLists.length === 0) {
+        showMessage('Minimal harus ada 1 item dalam cut list', 'error');
+        return;
+      }
+
+      // Show loading
+      showLoading();
+
+      // Call Google Apps Script function
+      google.script.run.withSuccessHandler(displayResults)
+        .withFailureHandler(function(error) {
+          showMessage('Error: ' + error, 'error');
+        })
+        .optimizeCutting(materialLength, kerfThickness, cutLists);
+    }
+
+    // Display results
+    function displayResults(result) {
+      const resultsSection = document.getElementById('resultsSection');
+      const messageBox = document.getElementById('messageBox');
+
+      if (result.error) {
+        showMessage(result.error, 'error');
+        resultsSection.classList.add('hidden');
+        return;
+      }
+
+      // Hide loading and show results section
+      resultsSection.classList.remove('hidden');
+
+      // Update stats
+      document.getElementById('totalBatches').textContent = result.totalBatches;
+      document.getElementById('wastePercentage').textContent = result.wastePercentage + '%';
+      document.getElementById('totalMaterialUsed').textContent = result.totalMaterialUsed + ' mm';
+      document.getElementById('totalWaste').textContent = result.totalWaste + ' mm';
+
+      // Display diagrams
+      const diagramContainer = document.getElementById('diagramContainer');
+      if (result.diagrams && result.diagrams.length > 0) {
+        diagramContainer.textContent = result.diagrams.join('\n');
+        diagramContainer.classList.remove('hidden');
+      }
+
+      showMessage(`✅ Optimasi berhasil! Dibutuhkan ${result.totalBatches} batang dengan waste ${result.wastePercentage}%`, 'success');
+    }
+
+    // Show message
+    function showMessage(message, type) {
+      const messageBox = document.getElementById('messageBox');
+      messageBox.className = type;
+      messageBox.textContent = message;
+      messageBox.classList.remove('hidden');
+    }
+
+    // Show loading
+    function showLoading() {
+      document.getElementById('resultsSection').classList.remove('hidden');
+      const diagramContainer = document.getElementById('diagramContainer');
+      diagramContainer.innerHTML = '<div class="loading">Memproses...</div>';
+      diagramContainer.classList.remove('hidden');
+    }
+
+    // Reset form
+    function resetForm() {
+      document.getElementById('materialLength').value = '';
+      document.getElementById('kerfThickness').value = '0';
+      document.getElementById('cutListContainer').innerHTML = '';
+      document.getElementById('resultsSection').classList.add('hidden');
+      cutListCounter = 0;
+      initializeCutLists();
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', function() {
+      initializeCutLists();
+    });
+  </script>
+</body>
+</html>
